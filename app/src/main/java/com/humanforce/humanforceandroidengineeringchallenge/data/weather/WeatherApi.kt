@@ -1,5 +1,6 @@
 package com.humanforce.humanforceandroidengineeringchallenge.data.weather
 
+import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.SearchLocationResponseJson
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.WeatherResponseJson
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -16,4 +17,11 @@ interface WeatherApi {
         @Query("appid") key: String,
         @Query("units") units: String = "metric"
     ): WeatherResponseJson
+
+    @GET("geo/1.0/direct")
+    suspend fun searchLocation(
+        @Query("q") query: String,
+        @Query("limit") limit: Int,
+        @Query("appid") key: String,
+    ): List<SearchLocationResponseJson>
 }

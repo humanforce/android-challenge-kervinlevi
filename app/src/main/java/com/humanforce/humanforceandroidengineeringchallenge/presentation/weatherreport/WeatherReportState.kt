@@ -26,4 +26,6 @@ sealed interface WeatherReportAction {
     object PermissionGranted: WeatherReportAction
 
     object OnPullToRefresh: WeatherReportAction
+
+    object OnLocationUpdated: WeatherReportAction
 }

@@ -53,6 +53,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.humanforce.humanforceandroidengineeringchallenge.R
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherUpdate
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyDarken1
@@ -61,6 +62,7 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.Or
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.Spacing
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.toGradientColors
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.toSmallIconResource
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigation.NavGraph
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.OnPullToRefresh
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.PermissionGranted
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.ShowPermissionsRationale
@@ -73,7 +75,10 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun WeatherReportScreen(
-    state: WeatherReportState, onAction: (WeatherReportAction) -> Unit
+    selectedLocation: Location,
+    state: WeatherReportState,
+    onAction: (WeatherReportAction) -> Unit,
+    navigateTo: (String) -> Unit
 ) {
 
     if (state.requestLocationPermissions) {
@@ -81,8 +86,7 @@ fun WeatherReportScreen(
     }
 
     Scaffold { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = state.isLoading,
+        PullToRefreshBox(isRefreshing = state.isLoading,
             onRefresh = { onAction(OnPullToRefresh) }) {
 
             LazyColumn(
@@ -92,7 +96,7 @@ fun WeatherReportScreen(
             ) {
 
                 item {
-                    CurrentWeatherUpdate(state)
+                    CurrentWeatherUpdate(state, navigateTo)
                 }
 
                 item {
@@ -113,7 +117,7 @@ fun WeatherReportScreen(
 }
 
 @Composable
-fun CurrentWeatherUpdate(state: WeatherReportState) {
+fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit) {
     val current = state.weatherForecast?.updates?.firstOrNull()?.firstOrNull()
     Box(
         modifier = Modifier.fillMaxWidth().background(
@@ -171,7 +175,7 @@ fun CurrentWeatherUpdate(state: WeatherReportState) {
                     shape = FloatingActionButtonDefaults.largeShape,
                     containerColor = BlueDarken3,
                     elevation = FloatingActionButtonDefaults.elevation(Spacing.small),
-                    onClick = {},
+                    onClick = { navigateTo(NavGraph.LOCATION) },
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Place,
@@ -249,9 +253,7 @@ fun WeatherInfoTile(drawable: Int, label: String, value: String, modifier: Modif
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            painter = painterResource(drawable),
-            contentDescription = label,
-            tint = BlueGreyDarken1
+            painter = painterResource(drawable), contentDescription = label, tint = BlueGreyDarken1
         )
         Column(modifier = Modifier.padding(start = Spacing.normal)) {
             Text(
@@ -260,9 +262,7 @@ fun WeatherInfoTile(drawable: Int, label: String, value: String, modifier: Modif
                 fontWeight = FontWeight.Light,
             )
             Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = BlueGreyLighten1
+                text = label, style = MaterialTheme.typography.bodyMedium, color = BlueGreyLighten1
             )
         }
     }

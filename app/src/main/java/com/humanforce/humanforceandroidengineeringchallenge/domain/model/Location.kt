@@ -4,8 +4,9 @@ package com.humanforce.humanforceandroidengineeringchallenge.domain.model
  * Created by kervinlevi on 24/12/24
  */
 data class Location(
-    val latitude: Double?,
-    val longitude: Double?,
-    val city: String?,
-    val country: String?
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val city: String? = null,
+    val country: String? = null,
+    val userLocation: Boolean
 )

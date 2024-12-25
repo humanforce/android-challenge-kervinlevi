@@ -3,7 +3,7 @@ package com.humanforce.humanforceandroidengineeringchallenge.presentation.weathe
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationProvider
+import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import com.humanforce.humanforceandroidengineeringchallenge.domain.weather.WeatherRepository
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportError.LocationUnavailable
@@ -17,20 +17,22 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class WeatherReportViewModel @Inject constructor(
-    private val locationProvider: LocationProvider,
+    private val locationRepository: LocationRepository,
     private val weatherRepository: WeatherRepository
-): ViewModel() {
+) : ViewModel() {
 
     var weatherReportState = mutableStateOf(WeatherReportState())
         private set
 
+    val selectedLocation = locationRepository.selectedLocation
+
     init {
-        val locationPermissionGranted = locationProvider.isLocationPermissionGranted()
+        val locationPermissionGranted = locationRepository.isLocationPermissionGranted()
         weatherReportState.value = weatherReportState.value.copy(
             requestLocationPermissions = !locationPermissionGranted,
             error = if (!locationPermissionGranted) LocationUnavailable else null
         )
-        if (locationProvider.isLocationPermissionGranted()) {
+        if (locationRepository.isLocationPermissionGranted()) {
             requestLocationAndWeather()
         }
     }
@@ -39,7 +41,11 @@ class WeatherReportViewModel @Inject constructor(
         if (weatherReportState.value.isLoading) return@launch
         weatherReportState.value = weatherReportState.value.copy(isLoading = true)
 
-        val location = locationProvider.getCurrentLocation()
+        val location = if (selectedLocation.value.userLocation) {
+            locationRepository.getUserLocation()
+        } else {
+            selectedLocation.value
+        }
         if (location != null) {
             when (val apiResponse = weatherRepository.getWeatherForecast(location)) {
                 is Response.Success -> {
@@ -94,6 +100,10 @@ class WeatherReportViewModel @Inject constructor(
             }
 
             WeatherReportAction.OnPullToRefresh -> {
+                requestLocationAndWeather()
+            }
+
+            WeatherReportAction.OnLocationUpdated -> {
                 requestLocationAndWeather()
             }
         }

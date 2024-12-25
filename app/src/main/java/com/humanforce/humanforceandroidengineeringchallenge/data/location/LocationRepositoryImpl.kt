@@ -14,8 +14,13 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationProvider
+import com.humanforce.humanforceandroidengineeringchallenge.data.weather.WeatherApi
+import com.humanforce.humanforceandroidengineeringchallenge.data.weather.toDomainModel
+import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -24,9 +29,17 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Created by kervinlevi on 24/12/24
  */
-class LocationProviderImpl @Inject constructor(private val context: Context) : LocationProvider {
+class LocationRepositoryImpl @Inject constructor(
+    private val context: Context,
+    private val weatherApi: WeatherApi,
+    private val appId: String
+) : LocationRepository {
+
+    private val _selectedLocation = MutableStateFlow(Location(userLocation = true))
+    override val selectedLocation: StateFlow<Location> = _selectedLocation
+
     @SuppressLint("MissingPermission")
-    override suspend fun getCurrentLocation(): Location? {
+    override suspend fun getUserLocation(): Location? {
         if (!isLocationPermissionGranted() || !isLocationEnabled()) {
             return null
         }
@@ -96,6 +109,20 @@ class LocationProviderImpl @Inject constructor(private val context: Context) : L
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    override fun updateLocation(location: Location) {
+        _selectedLocation.value = location
+    }
+
+    override suspend fun searchLocations(query: String): Response<List<Location>> {
+        try {
+            val remoteData = weatherApi.searchLocation(query = query, limit = 10, key = appId)
+            val searchResult = remoteData.toDomainModel()
+            return Response.Success(searchResult)
+        } catch (exception: Exception) {
+            return Response.Error(exception)
+        }
+    }
+
     private fun isLocationEnabled(): Boolean {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
@@ -109,7 +136,8 @@ class LocationProviderImpl @Inject constructor(private val context: Context) : L
             latitude = androidLocation.latitude,
             longitude = androidLocation.longitude,
             city = address?.locality,
-            country = address?.countryName
+            country = address?.countryName,
+            userLocation = true
         )
     }
 }

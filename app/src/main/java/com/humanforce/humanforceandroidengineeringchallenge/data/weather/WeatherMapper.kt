@@ -20,7 +20,8 @@ fun WeatherResponseJson.toDomainModel(): WeatherForecast {
         latitude = city?.coordinates?.lat,
         longitude = city?.coordinates?.long,
         city = city?.name,
-        country = (city?.country)?.let { Locale("", it).displayCountry } ?: city?.country
+        country = (city?.country)?.let { Locale("", it).displayCountry } ?: city?.country,
+        userLocation = false
     )
 
     val locale = Locale.getDefault()
