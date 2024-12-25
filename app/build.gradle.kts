@@ -28,6 +28,7 @@ android {
             properties.load(envFile.inputStream())
         }
 
+        buildConfigField("String", "OPEN_WEATHER_URL", "\"https://api.openweathermap.org/\"")
         buildConfigField("String", "OPEN_WEATHER_MAP_API_KEY", properties.getProperty("OPEN_WEATHER_MAP_API_KEY", "\"\""))
     }
 
