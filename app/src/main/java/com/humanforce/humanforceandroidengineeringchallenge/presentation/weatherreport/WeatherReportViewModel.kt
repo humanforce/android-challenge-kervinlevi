@@ -46,42 +46,41 @@ class WeatherReportViewModel @Inject constructor(
         } else {
             selectedLocation.value
         }
-        if (location != null) {
-            when (val apiResponse = weatherRepository.getWeatherForecast(location)) {
-                is Response.Success -> {
-                    weatherReportState.value = weatherReportState.value.copy(
-                        isLoading = false,
-                        location = apiResponse.data.location?.copy(
-                            state = location.state,
-                            userLocation = location.userLocation
-                        ),
-                        weatherForecast = apiResponse.data,
-                        error = null
-                    )
-                }
 
-                is Response.Error -> {
-                    val exception = apiResponse.exception
-                    val error = if (exception is HttpException) {
-                        WeatherReportError.HttpError("${exception.code()}: ${exception.message()}")
-                    } else {
-                        WeatherReportError.NoInternet
-                    }
-                    weatherReportState.value = weatherReportState.value.copy(
-                        isLoading = false,
-                        location = location,
-                        weatherForecast = null,
-                        error = error
-                    )
-                }
-            }
-        } else {
+        if (location == null) {
             weatherReportState.value = weatherReportState.value.copy(
                 isLoading = false,
                 location = null,
                 weatherForecast = null,
                 error = LocationUnavailable
             )
+            return@launch
+        }
+
+        when (val apiResponse = weatherRepository.getWeatherForecast(location)) {
+            is Response.Success -> {
+                weatherReportState.value = weatherReportState.value.copy(
+                    isLoading = false,
+                    location = location,
+                    weatherForecast = apiResponse.data,
+                    error = null
+                )
+            }
+
+            is Response.Error -> {
+                val exception = apiResponse.exception
+                val error = if (exception is HttpException) {
+                    WeatherReportError.HttpError("${exception.code()}: ${exception.message()}")
+                } else {
+                    WeatherReportError.NoInternet
+                }
+                weatherReportState.value = weatherReportState.value.copy(
+                    isLoading = false,
+                    location = location,
+                    weatherForecast = null,
+                    error = error
+                )
+            }
         }
     }
 

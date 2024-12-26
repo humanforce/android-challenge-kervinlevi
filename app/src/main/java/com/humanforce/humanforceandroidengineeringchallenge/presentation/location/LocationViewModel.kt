@@ -83,9 +83,7 @@ class LocationViewModel @Inject constructor(private val locationRepository: Loca
             if (query.isEmpty()) return@launch
 
             locationState.value = locationState.value.copy(isSearchLoading = true)
-            val result = locationRepository.searchLocations(locationState.value.query)
-
-            when (result) {
+            when (val result = locationRepository.searchLocations(locationState.value.query)) {
                 is Response.Success -> {
                     val error = if (result.data.isEmpty()) LocationError.EmptyResult else null
                     locationState.value = locationState.value.copy(

@@ -1,9 +1,5 @@
 package com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport
 
-import android.Manifest
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
@@ -36,7 +33,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -49,16 +45,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.humanforce.humanforceandroidengineeringchallenge.R
-import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherUpdate
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.RequestLocationPermission
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getDisplayText
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyDarken1
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyLighten1
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.DarkTextColor
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.OrangeDarken1
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.Spacing
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.toGradientColors
@@ -82,7 +76,11 @@ fun WeatherReportScreen(
 ) {
 
     if (state.requestLocationPermissions) {
-        RequestLocationPermission(onAction)
+        RequestLocationPermission(onPermissionGranted = {
+            onAction(PermissionGranted)
+        }, onPermissionDenied = {
+            onAction(ShowPermissionsRationale)
+        })
     }
 
     Scaffold { innerPadding ->
@@ -103,12 +101,11 @@ fun WeatherReportScreen(
                     ExtraWeatherUpdate(state)
                 }
 
-                state.weatherForecast?.updates?.take(5)?.let { dailyUpdates ->
-                    dailyUpdates.forEachIndexed { index, weatherUpdates ->
-                        item {
-                            Spacer(modifier = Modifier.height(Spacing.large))
-                            DailyForecastCard(index, weatherUpdates)
-                        }
+
+                state.weatherForecast?.updates?.let { dailyUpdates ->
+                    itemsIndexed(dailyUpdates) { index, weatherUpdates ->
+                        Spacer(modifier = Modifier.height(Spacing.large))
+                        DailyForecastCard(index, weatherUpdates)
                     }
                 }
             }
@@ -135,11 +132,13 @@ fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit
                 text = temperature,
                 style = MaterialTheme.typography.displayLarge,
                 fontWeight = FontWeight.Thin,
+                color = DarkTextColor,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
             Text(
                 text = current?.conditionDescription ?: "",
                 style = MaterialTheme.typography.titleMedium,
+                color = DarkTextColor,
                 modifier = Modifier.padding(horizontal = Spacing.large)
             )
             Spacer(modifier = Modifier.height(Spacing.xlarge.times(4)))
@@ -149,6 +148,7 @@ fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit
                     Text(
                         text = state.location.getDisplayText(max = 2),
                         maxLines = 1,
+                        color = DarkTextColor,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(horizontal = Spacing.large).fillMaxWidth()
                     )
@@ -296,38 +296,6 @@ fun DailyForecastCard(index: Int, weatherUpdates: List<WeatherUpdate>) {
                     Spacer(modifier = Modifier.height(Spacing.normal))
                 }
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalPermissionsApi::class)
-@Composable
-fun RequestLocationPermission(onAction: (WeatherReportAction) -> Unit) {
-    val permissionsState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-    )
-
-    val requestPermissionLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            if (granted.containsValue(true)) {
-                onAction(PermissionGranted)
-            } else {
-                onAction(ShowPermissionsRationale)
-            }
-        }
-
-    LaunchedEffect(key1 = permissionsState) {
-        if (!permissionsState.permissions.first().status.isGranted && !permissionsState.permissions.last().status.isGranted && permissionsState.shouldShowRationale) {
-            onAction(ShowPermissionsRationale)
-        } else {
-            requestPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
         }
     }
 }

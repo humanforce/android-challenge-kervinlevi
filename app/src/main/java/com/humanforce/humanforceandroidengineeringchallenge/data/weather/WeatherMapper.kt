@@ -58,7 +58,7 @@ fun WeatherResponseJson.toDomainModel(): WeatherForecast {
             humidity = it.mainForecast?.humidity,
             chanceOfRain = ((it.precipitation ?: 0f) * 100).roundToInt()
         )
-    }?.groupBy { it.date }?.values?.toList() ?: emptyList()
+    }?.groupBy { it.date }?.values?.toList()?.take(5) ?: emptyList()
 
     return WeatherForecast(
         location = location,

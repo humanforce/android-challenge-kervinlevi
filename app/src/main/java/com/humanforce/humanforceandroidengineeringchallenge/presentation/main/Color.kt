@@ -30,3 +30,5 @@ val CyanLighten5 = Color(0xFFE0F7FA)
 val OrangeDarken1 = Color(0xFFFB8C00)
 val OrangeLighten4 = Color(0xFFFFE0B2)
 val YellowLighten4 = Color(0xFFFFF9C4)
+
+val DarkTextColor = Color(0xFF121212)
