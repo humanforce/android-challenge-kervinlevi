@@ -70,7 +70,7 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigation.NavGraph
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.OnPullToRefresh
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.PermissionGranted
-import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.ShowPermissionsRationale
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.PermissionDenied
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.UpdateTemperatureUnit
 
 /**
@@ -89,7 +89,7 @@ fun WeatherReportScreen(
         RequestLocationPermission(onPermissionGranted = {
             onAction(PermissionGranted)
         }, onPermissionDenied = {
-            onAction(ShowPermissionsRationale)
+            onAction(PermissionDenied)
         })
     }
 
@@ -126,7 +126,13 @@ fun WeatherReportScreen(
                 }
 
                 item {
-                    TemperatureUnitSettings(state.activeTemperatureUnit, state.isLoading, onAction)
+                    if (state.weatherForecast != null) {
+                        TemperatureUnitSettings(
+                            state.activeTemperatureUnit,
+                            state.isLoading,
+                            onAction
+                        )
+                    }
                 }
 
                 item {
@@ -135,7 +141,6 @@ fun WeatherReportScreen(
             }
         }
     }
-
 
     when (val event = state.oneTimeEvent?.consumeOneTimeEvent()) {
         is WeatherReportError.HttpError -> {

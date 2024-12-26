@@ -26,7 +26,7 @@ sealed interface WeatherReportError {
 }
 
 sealed interface WeatherReportAction {
-    object ShowPermissionsRationale: WeatherReportAction
+    object PermissionDenied: WeatherReportAction
     object PermissionGranted: WeatherReportAction
     object OnPullToRefresh: WeatherReportAction
     object OnLocationUpdated: WeatherReportAction

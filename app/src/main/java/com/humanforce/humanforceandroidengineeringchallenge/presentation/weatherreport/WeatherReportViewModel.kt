@@ -22,16 +22,15 @@ class WeatherReportViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository
 ) : ViewModel() {
 
+    val selectedLocation = locationRepository.selectedLocation
     var state = mutableStateOf(
         WeatherReportState(
-            location = locationRepository.getRecentLocation(),
+            location = selectedLocation.value,
             weatherForecast = weatherRepository.getRecentWeatherForecast(),
             activeTemperatureUnit = weatherRepository.getTemperatureUnit()
         )
     )
         private set
-
-    val selectedLocation = locationRepository.selectedLocation
 
     init {
         val requestUserLocation =
@@ -105,7 +104,7 @@ class WeatherReportViewModel @Inject constructor(
                 requestLocationAndWeather()
             }
 
-            WeatherReportAction.ShowPermissionsRationale -> {
+            WeatherReportAction.PermissionDenied -> {
                 val hasCache = state.value.weatherForecast != null
                 state.value = state.value.copy(
                     requestLocationPermissions = false,
