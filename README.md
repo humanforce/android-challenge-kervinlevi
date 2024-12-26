@@ -1,3 +1,52 @@
+
+
+
+# Weather App
+Weather App is an Android app to display weather forecasts from [OpenWeather API](https://openweathermap.org/current). The user can either select their local location or search a location by name. The coordinates of the selected location will then be used to retrieve the forecast from OpenWeather API.
+
+## Features
+
+- Displaying of current weather of selected location that includes temperature, humidity, chance of rain, sunrise, and sunset.
+- Displaying of five-day weather forecast.
+- Remembering the last selected location so that it will automatically be set when the app is opened.
+- Adding locations to favorite list for easier selection.
+- Caching the last retrieved weather forecast so the app can be used in offline mode.
+- Selecting preferred temperature unit (Celsius/Fahrenheit/Kelvin).
+
+## Setup
+
+1. In the project root directory, run `cp .env.example .env`.
+2. Add your OpenWeatherMap API key to the copied `.env` file.
+3. Build the project in Android Studio to inject the API key defined the `.env` file to the apps `BuildConfig`.
+
+## Android
+The architecture of the code is MVVM. The libraries and tools used include:
+  + Hilt (for dependency injection)
+  + Jetpack Compose (for building the UI)
+  + Jetpack Navigation (for the routing of Composable screens)
+  + MockK (for mocking components in unit tests)
+  + Moshi (to convert string to json, and vice versa)
+  + Room (for storing the previously fetched weather forecast)
+  + Retrofit (to retrieve remote data from OpenWeather API)
+
+## Demo
+https://github.com/user-attachments/assets/8b743f2e-6b2b-48af-bb6d-9c14c80a135d
+
+
+
+Screenshots:
+|Location permission denied|Empty search query|Empty search result|
+|-|-|-|
+|<img width="333" alt="Screenshot1_Location_not_granted" src="https://github.com/user-attachments/assets/97370699-6875-47df-b356-1521617ab302" />|<img width="333" alt="Screenshot2_empty_query" src="https://github.com/user-attachments/assets/2877c7d5-0abe-4194-ab40-744f3760f4f0" />|<img width="333" alt="Screenshot3_empty_search_result" src="https://github.com/user-attachments/assets/3fc9a750-b512-4b85-847f-77ace6f82573" />|
+
+|Multiple saved locations|Displaying cached forecast|Setting temperature unit|
+|-|-|-|
+|<img width="333" alt="Screenshot4_multiple_favorite_locations" src="https://github.com/user-attachments/assets/e9115691-e3fd-4da0-b66e-417fe2c113c1" />|<img width="333" alt="Screenshot5_Http_error_with_cache" src="https://github.com/user-attachments/assets/0b8a69c4-80e3-4e0f-921c-835152e82900" />|<img width="333" alt="Screenshot6_setting_temperature_unit" src="https://github.com/user-attachments/assets/bb582344-8fc6-44d1-b9eb-fbcf239c5364" />|
+
+
+<hr style="border:2px solid gray">
+
+
 # Humanforce Android Engineering Challenge
 
 ## Overview
