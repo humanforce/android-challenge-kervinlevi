@@ -72,10 +72,9 @@ import kotlin.math.roundToInt
  * Created by kervinlevi on 24/12/24
  */
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeatherReportScreen(
-    selectedLocation: Location,
     state: WeatherReportState,
     onAction: (WeatherReportAction) -> Unit,
     navigateTo: (String) -> Unit

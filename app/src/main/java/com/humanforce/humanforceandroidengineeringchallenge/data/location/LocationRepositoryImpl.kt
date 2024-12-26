@@ -4,10 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Address
-import android.location.Geocoder
 import android.location.LocationManager
-import android.os.Build
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -21,7 +18,6 @@ import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Locatio
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -38,47 +34,33 @@ class LocationRepositoryImpl @Inject constructor(
     private val _selectedLocation = MutableStateFlow(Location(userLocation = true))
     override val selectedLocation: StateFlow<Location> = _selectedLocation
 
-    @SuppressLint("MissingPermission")
     override suspend fun getUserLocation(): Location? {
         if (!isLocationPermissionGranted() || !isLocationEnabled()) {
             return null
         }
+        getUserCoordinates()?.let {
+            val response = getLocationByCoordinates(it.first, it.second)
+            if (response is Response.Success) {
+                return response.data
+            }
+        }
+        return null
+    }
 
+    @SuppressLint("MissingPermission")
+    private suspend fun getUserCoordinates(): Pair<Double, Double>? {
         return suspendCoroutine { coroutine ->
             val locationProviderClient = LocationServices.getFusedLocationProviderClient(context)
             val request =
                 LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000L).build()
             val locationCallback = object : LocationCallback() {
                 override fun onLocationResult(p0: LocationResult) {
-                    val geocoder = Geocoder(context, Locale.getDefault())
                     val fuseLocation = p0.lastLocation
                     if (fuseLocation == null) {
                         coroutine.resume(null)
                         removeCallback()
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        geocoder.getFromLocation(fuseLocation.latitude,
-                            fuseLocation.longitude,
-                            1,
-                            object : Geocoder.GeocodeListener {
-                                override fun onGeocode(addresses: MutableList<Address>) {
-                                    coroutine.resume(
-                                        getLocation(
-                                            fuseLocation, addresses.firstOrNull()
-                                        )
-                                    )
-                                    removeCallback()
-                                }
-
-                                override fun onError(errorMessage: String?) {
-                                    coroutine.resume(getLocation(fuseLocation, null))
-                                    removeCallback()
-                                }
-                            })
                     } else {
-                        val addresses = geocoder.getFromLocation(
-                            fuseLocation.latitude, fuseLocation.longitude, 1
-                        )
-                        coroutine.resume(getLocation(fuseLocation, addresses?.firstOrNull()))
+                        coroutine.resume(Pair(fuseLocation.longitude, fuseLocation.latitude))
                         removeCallback()
                     }
                 }
@@ -123,21 +105,23 @@ class LocationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getLocationByCoordinates(
+        longitude: Double,
+        latitude: Double
+    ): Response<Location> {
+        try {
+            val remoteData = weatherApi.getLocationByCoordinates(longitude, latitude, 1, appId)
+            return remoteData.firstOrNull()?.let {
+                Response.Success(it.toDomainModel())
+            } ?: Response.Error(Exception("Empty result"))
+        } catch (exception: Exception) {
+            return Response.Error(exception)
+        }
+    }
+
     private fun isLocationEnabled(): Boolean {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                 || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-    }
-
-    private fun getLocation(
-        androidLocation: android.location.Location, address: Address?
-    ): Location {
-        return Location(
-            latitude = androidLocation.latitude,
-            longitude = androidLocation.longitude,
-            city = address?.locality,
-            country = address?.countryName,
-            userLocation = true
-        )
     }
 }

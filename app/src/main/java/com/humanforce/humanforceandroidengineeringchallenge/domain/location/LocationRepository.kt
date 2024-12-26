@@ -17,4 +17,6 @@ interface LocationRepository {
     fun updateLocation(location: Location)
 
     suspend fun searchLocations(query: String): Response<List<Location>>
+
+    suspend fun getLocationByCoordinates(longitude: Double, latitude: Double): Response<Location>
 }

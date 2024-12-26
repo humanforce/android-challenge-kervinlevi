@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,23 +16,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -45,8 +54,6 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.locatio
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyLighten1
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyLighten4
-import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueLighten3
-import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueLighten5
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.Spacing
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigation.NavGraph
 
@@ -54,13 +61,18 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigat
  * Created by kervinlevi on 24/12/24
  */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationScreen(
     state: LocationState, onAction: (LocationAction) -> Unit, navigateTo: (String) -> Unit
 ) {
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
-    Scaffold { innerPadding ->
-        Box(modifier = Modifier.background(BlueDarken3)) {
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = { LocationTopBar(navigateTo, scrollBehavior) }
+    ) { innerPadding ->
+        Box(modifier = Modifier.background(BlueDarken3).imePadding()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(
                     top = innerPadding.calculateTopPadding().plus(Spacing.large),
@@ -69,19 +81,9 @@ fun LocationScreen(
                     end = Spacing.large
                 )
             ) {
-
-                item {
-                    Text(
-                        text = stringResource(R.string.select_location),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = Spacing.large)
-                    )
-                }
-
                 item {
                     TextField(
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xlarge),
+                        modifier = Modifier.fillMaxWidth().padding(),
                         colors = TextFieldDefaults.colors().copy(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
@@ -203,4 +205,39 @@ fun LocationScreen(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LocationTopBar(navigateTo: (String) -> Unit, scrollBehavior: TopAppBarScrollBehavior) {
+    MediumTopAppBar(
+        title = {
+            Text(
+                text = stringResource(R.string.select_location),
+                maxLines = 1,
+                style = MaterialTheme.typography.headlineSmall,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = Spacing.normal)
+            )
+        },
+
+        colors = TopAppBarDefaults.topAppBarColors().copy(
+            titleContentColor = Color.White,
+            navigationIconContentColor = Color.White,
+            containerColor = BlueDarken3,
+            scrolledContainerColor = BlueDarken3
+        ),
+        navigationIcon = {
+            IconButton(
+                onClick = { navigateTo(NavGraph.WEATHER_REPORT) },
+                modifier = Modifier.padding(start = Spacing.small)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = stringResource(R.string.back)
+                )
+            }
+        },
+        scrollBehavior = scrollBehavior
+    )
 }

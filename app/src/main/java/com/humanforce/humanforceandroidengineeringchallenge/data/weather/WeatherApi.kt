@@ -24,4 +24,12 @@ interface WeatherApi {
         @Query("limit") limit: Int,
         @Query("appid") key: String,
     ): List<SearchLocationResponseJson>
+
+    @GET("geo/1.0/reverse")
+    suspend fun getLocationByCoordinates(
+        @Query("lon") longitude: Double,
+        @Query("lat") latitude: Double,
+        @Query("limit") limit: Int,
+        @Query("appid") key: String,
+    ): List<SearchLocationResponseJson>
 }

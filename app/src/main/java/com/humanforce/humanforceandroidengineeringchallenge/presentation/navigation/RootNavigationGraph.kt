@@ -22,7 +22,7 @@ fun RootNavigationGraph(rootNavController: NavHostController) {
     NavHost(
         navController = rootNavController,
         route = NavGraph.ROOT,
-        startDestination = NavGraph.LOCATION
+        startDestination = NavGraph.WEATHER_REPORT
     ) {
 
         composable(NavGraph.WEATHER_REPORT) {
@@ -33,7 +33,6 @@ fun RootNavigationGraph(rootNavController: NavHostController) {
             }
 
             WeatherReportScreen(
-                selectedLocation = locationState,
                 state = viewModel.weatherReportState.value,
                 onAction = viewModel::onAction
             ) { route ->

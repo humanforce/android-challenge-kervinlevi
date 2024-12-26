@@ -21,7 +21,7 @@ class LocationViewModel @Inject constructor(private val locationRepository: Loca
     var locationState = mutableStateOf(LocationState())
         private set
 
-    var currentSearchJob: WeakReference<Job>? = null
+    private var currentSearchJob: WeakReference<Job>? = null
     fun onAction(action: LocationAction) {
         when (action) {
             LocationAction.PermissionGranted -> {
