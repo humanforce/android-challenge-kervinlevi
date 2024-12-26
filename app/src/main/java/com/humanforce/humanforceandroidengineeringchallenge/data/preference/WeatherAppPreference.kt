@@ -1,6 +1,7 @@
 package com.humanforce.humanforceandroidengineeringchallenge.data.preference
 
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.TemperatureUnit
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherForecast
 
 /**
@@ -12,4 +13,7 @@ interface WeatherAppPreference {
     fun saveRecentLocation(location: Location?)
     fun saveRecentWeatherForecast(weatherForecast: WeatherForecast?)
     fun getRecentWeatherForecast(): WeatherForecast?
+
+    fun getTemperatureUnit(): TemperatureUnit
+    fun saveTemperatureUnit(unit: TemperatureUnit)
 }

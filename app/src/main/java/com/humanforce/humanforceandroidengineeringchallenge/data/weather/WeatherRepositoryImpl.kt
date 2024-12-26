@@ -5,6 +5,7 @@ import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Locatio
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response.Error
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response.Success
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.TemperatureUnit
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherForecast
 import com.humanforce.humanforceandroidengineeringchallenge.domain.weather.WeatherRepository
 
@@ -22,6 +23,7 @@ class WeatherRepositoryImpl(
             val remoteData = weatherApi.getWeather(
                 latitude = location.latitude.toString(),
                 longitude = location.longitude.toString(),
+                units = preference.getTemperatureUnit().value,
                 key = appId
             )
             val weatherReport = remoteData.toDomainModel()
@@ -37,5 +39,13 @@ class WeatherRepositoryImpl(
 
     override fun saveRecentWeatherForecast(weatherForecast: WeatherForecast?) {
         return preference.saveRecentWeatherForecast(weatherForecast)
+    }
+
+    override fun getTemperatureUnit(): TemperatureUnit {
+        return preference.getTemperatureUnit()
+    }
+
+    override fun updateTemperatureUnit(unit: TemperatureUnit) {
+        preference.saveTemperatureUnit(unit)
     }
 }

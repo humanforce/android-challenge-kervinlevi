@@ -2,6 +2,7 @@ package com.humanforce.humanforceandroidengineeringchallenge.domain.weather
 
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.TemperatureUnit
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherForecast
 
 /**
@@ -13,4 +14,6 @@ interface WeatherRepository {
 
     fun getRecentWeatherForecast(): WeatherForecast?
     fun saveRecentWeatherForecast(weatherForecast: WeatherForecast?)
+    fun updateTemperatureUnit(unit: TemperatureUnit)
+    fun getTemperatureUnit(): TemperatureUnit
 }

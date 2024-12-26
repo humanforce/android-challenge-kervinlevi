@@ -15,16 +15,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,6 +45,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionOnScreen
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,10 +54,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.humanforce.humanforceandroidengineeringchallenge.R
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.TemperatureUnit
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherUpdate
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.RequestLocationPermission
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.SimpleToast
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getDisplayText
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getTemperature
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyDarken1
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyLighten1
@@ -66,7 +72,7 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigat
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.OnPullToRefresh
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.PermissionGranted
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.ShowPermissionsRationale
-import kotlin.math.roundToInt
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportAction.UpdateTemperatureUnit
 
 /**
  * Created by kervinlevi on 24/12/24
@@ -91,8 +97,9 @@ fun WeatherReportScreen(
     Scaffold { innerPadding ->
         PullToRefreshBox(isRefreshing = state.isLoading,
             onRefresh = { onAction(OnPullToRefresh) }) {
-
+            val listState = rememberLazyListState()
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize()
                     .padding(bottom = innerPadding.calculateBottomPadding())
                     .background(color = MaterialTheme.colorScheme.background)
@@ -109,7 +116,7 @@ fun WeatherReportScreen(
                 state.weatherForecast?.updates?.let { dailyUpdates ->
                     itemsIndexed(dailyUpdates) { index, weatherUpdates ->
                         Spacer(modifier = Modifier.height(Spacing.large))
-                        DailyForecastCard(index, weatherUpdates)
+                        DailyForecastCard(index, weatherUpdates, state.activeTemperatureUnit)
                     }
                 }
 
@@ -117,6 +124,10 @@ fun WeatherReportScreen(
                     item {
                         ScreenError(it)
                     }
+                }
+
+                item {
+                    TemperatureUnitSettings(state.activeTemperatureUnit, state.isLoading, onAction)
                 }
 
                 item {
@@ -154,9 +165,9 @@ fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit
     ) {
         Column {
             Spacer(modifier = Modifier.height(Spacing.xlarge.times(4)))
-            val temperature = current?.temperature?.roundToInt()?.let { temp ->
-                stringResource(R.string.celsius, temp)
-            } ?: ""
+            val temperature = LocalContext.current.getTemperature(
+                current?.temperature, state.activeTemperatureUnit
+            )
             Text(
                 text = temperature,
                 style = MaterialTheme.typography.displayLarge,
@@ -293,7 +304,11 @@ fun WeatherInfoTile(drawable: Int, label: String, value: String, modifier: Modif
 }
 
 @Composable
-fun DailyForecastCard(index: Int, weatherUpdates: List<WeatherUpdate>) {
+fun DailyForecastCard(
+    index: Int,
+    weatherUpdates: List<WeatherUpdate>,
+    activeUnit: TemperatureUnit
+) {
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.normal)) {
         Box(modifier = Modifier.fillMaxWidth().background(color = OrangeDarken1)) {
             Text(
@@ -319,9 +334,7 @@ fun DailyForecastCard(index: Int, weatherUpdates: List<WeatherUpdate>) {
                         tint = Color.Unspecified
                     )
                     Text(text = "${item.time}")
-                    item.temperature?.roundToInt()?.let { temperature ->
-                        Text(text = stringResource(R.string.celsius, temperature))
-                    }
+                    Text(text = LocalContext.current.getTemperature(item.temperature, activeUnit))
                     Spacer(modifier = Modifier.height(Spacing.normal))
                 }
             }
@@ -376,6 +389,71 @@ fun ScreenError(error: WeatherReportError) {
             textAlign = TextAlign.Start,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.fillMaxWidth(0.8f)
+        )
+    }
+}
+
+@Composable
+fun TemperatureUnitSettings(
+    activeUnit: TemperatureUnit,
+    isLoading: Boolean,
+    onAction: (WeatherReportAction) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(0.7f)
+            .padding(horizontal = Spacing.normal, vertical = Spacing.large)
+    ) {
+        Spacer(modifier = Modifier.height(Spacing.normal))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = stringResource(R.string.set_temperature_unit),
+                modifier = Modifier.padding(start = Spacing.normal).size(Spacing.medium)
+            )
+            Spacer(modifier = Modifier.width(Spacing.small))
+            Text(
+                text = stringResource(R.string.set_temperature_unit),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+        Spacer(modifier = Modifier.width(Spacing.normal))
+        Row {
+            Spacer(modifier = Modifier.width(Spacing.small))
+            TemperatureUnit.entries.forEach {
+                TemperatureUnitButton(
+                    it,
+                    activeUnit,
+                    isLoading,
+                    modifier = Modifier.weight(1f),
+                    onAction)
+                Spacer(modifier = Modifier.width(Spacing.small))
+            }
+        }
+        Spacer(modifier = Modifier.height(Spacing.normal))
+    }
+}
+
+@Composable
+fun TemperatureUnitButton(
+    unit: TemperatureUnit,
+    activeUnit: TemperatureUnit,
+    isLoading: Boolean,
+    modifier: Modifier,
+    onAction: (WeatherReportAction) -> Unit
+) {
+    TextButton(
+        enabled = !isLoading && unit != activeUnit,
+        onClick = { onAction(UpdateTemperatureUnit(unit)) },
+        modifier = modifier
+    ) {
+        val textRes = when (unit) {
+            TemperatureUnit.CELSIUS -> R.string.celsius_unit
+            TemperatureUnit.FAHRENHEIT -> R.string.fahrenheit_unit
+            TemperatureUnit.KELVIN -> R.string.kelvin_unit
+        }
+        Text(
+            text = stringResource(textRes),
+            style = MaterialTheme.typography.titleLarge
         )
     }
 }

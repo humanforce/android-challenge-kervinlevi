@@ -25,7 +25,8 @@ class WeatherReportViewModel @Inject constructor(
     var state = mutableStateOf(
         WeatherReportState(
             location = locationRepository.getRecentLocation(),
-            weatherForecast = weatherRepository.getRecentWeatherForecast()
+            weatherForecast = weatherRepository.getRecentWeatherForecast(),
+            activeTemperatureUnit = weatherRepository.getTemperatureUnit()
         )
     )
         private set
@@ -69,6 +70,7 @@ class WeatherReportViewModel @Inject constructor(
                     isLoading = false,
                     location = location,
                     weatherForecast = apiResponse.data,
+                    activeTemperatureUnit = weatherRepository.getTemperatureUnit(),
                     oneTimeEvent = null,
                     onScreenError = null
                 )
@@ -118,6 +120,11 @@ class WeatherReportViewModel @Inject constructor(
             }
 
             WeatherReportAction.OnLocationUpdated -> {
+                requestLocationAndWeather()
+            }
+
+            is WeatherReportAction.UpdateTemperatureUnit -> {
+                weatherRepository.updateTemperatureUnit(action.temperatureUnit)
                 requestLocationAndWeather()
             }
         }

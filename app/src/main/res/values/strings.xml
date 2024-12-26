@@ -3,6 +3,7 @@
     <string name="select_location">Select location</string>
     <string name="celsius">%d\u2103</string>
     <string name="fahrenheit">%d\u2109</string>
+    <string name="kelvin">%d\u212A</string>
     <string name="as_of_date">as of %s</string>
     <string name="update_location">Update location</string>
     <string name="today">Today</string>
@@ -25,4 +26,8 @@
     <string name="generic_error_title">Failed getting forecast</string>
     <string name="internet_error_title">Connection error</string>
     <string name="location_error_title">Location error</string>
+    <string name="set_temperature_unit">Set temperature unit</string>
+    <string name="celsius_unit">\u2103</string>
+    <string name="fahrenheit_unit">\u2109</string>
+    <string name="kelvin_unit">\u212A</string>
 </resources>
