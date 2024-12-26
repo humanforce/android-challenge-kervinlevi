@@ -6,6 +6,8 @@ import androidx.room.Room
 import com.humanforce.humanforceandroidengineeringchallenge.BuildConfig
 import com.humanforce.humanforceandroidengineeringchallenge.data.db.WeatherAppDb
 import com.humanforce.humanforceandroidengineeringchallenge.data.location.LocationRepositoryImpl
+import com.humanforce.humanforceandroidengineeringchallenge.data.preference.WeatherAppPreference
+import com.humanforce.humanforceandroidengineeringchallenge.data.preference.WeatherAppPreferenceImpl
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.WeatherApi
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.WeatherRepositoryImpl
 import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
@@ -29,14 +31,24 @@ object ApplicationModule {
     @Provides
     @Singleton
     fun provideLocationProvider(
-        @ApplicationContext context: Context, weatherApi: WeatherApi, weatherAppDb: WeatherAppDb
+        @ApplicationContext context: Context,
+        weatherApi: WeatherApi,
+        weatherAppDb: WeatherAppDb,
+        weatherAppPreference: WeatherAppPreference
     ): LocationRepository {
         return LocationRepositoryImpl(
             context,
             weatherApi,
             weatherAppDb.favoriteLocationDao(),
+            weatherAppPreference,
             APIKeyManager.apiKey
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherAppPreference( @ApplicationContext context: Context): WeatherAppPreference {
+        return WeatherAppPreferenceImpl(context)
     }
 
     @Provides
@@ -49,8 +61,8 @@ object ApplicationModule {
 
     @Provides
     @Singleton
-    fun provideWeatherRepository(weatherApi: WeatherApi): WeatherRepository {
-        return WeatherRepositoryImpl(weatherApi, APIKeyManager.apiKey)
+    fun provideWeatherRepository(weatherApi: WeatherApi, preference: WeatherAppPreference): WeatherRepository {
+        return WeatherRepositoryImpl(weatherApi, preference, APIKeyManager.apiKey)
     }
 
     @Provides

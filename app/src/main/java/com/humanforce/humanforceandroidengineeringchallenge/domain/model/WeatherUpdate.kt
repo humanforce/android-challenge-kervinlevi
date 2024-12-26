@@ -1,8 +1,11 @@
 package com.humanforce.humanforceandroidengineeringchallenge.domain.model
 
+import com.squareup.moshi.JsonClass
+
 /**
  * Created by kervinlevi on 24/12/24
  */
+@JsonClass(generateAdapter = true)
 data class WeatherUpdate(
     val date: String?,
     val time: String?,

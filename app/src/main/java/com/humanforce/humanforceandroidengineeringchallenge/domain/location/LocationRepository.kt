@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface LocationRepository {
     val selectedLocation: StateFlow<Location>
 
-    suspend fun getUserLocation(): Location?
+    suspend fun getUserLocation(): Response<Location>
 
     fun isLocationPermissionGranted(): Boolean
 
@@ -23,4 +23,6 @@ interface LocationRepository {
 
     val favoriteLocations: Flow<List<Location>>
     suspend fun addFavoriteLocation(location: Location): Response<Long>
+    fun getRecentLocation(): Location?
+    fun saveRecentLocation(location: Location?)
 }

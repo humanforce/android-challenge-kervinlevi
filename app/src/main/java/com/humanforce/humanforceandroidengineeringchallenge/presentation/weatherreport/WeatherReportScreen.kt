@@ -1,5 +1,6 @@
 package com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,12 +17,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,12 +45,14 @@ import androidx.compose.ui.layout.positionOnScreen
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.humanforce.humanforceandroidengineeringchallenge.R
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherUpdate
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.RequestLocationPermission
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.SimpleToast
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getDisplayText
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyDarken1
@@ -101,15 +106,39 @@ fun WeatherReportScreen(
                     ExtraWeatherUpdate(state)
                 }
 
-
                 state.weatherForecast?.updates?.let { dailyUpdates ->
                     itemsIndexed(dailyUpdates) { index, weatherUpdates ->
                         Spacer(modifier = Modifier.height(Spacing.large))
                         DailyForecastCard(index, weatherUpdates)
                     }
                 }
+
+                state.onScreenError?.let {
+                    item {
+                        ScreenError(it)
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(Spacing.xlarge))
+                }
             }
         }
+    }
+
+
+    when (val event = state.oneTimeEvent?.consumeOneTimeEvent()) {
+        is WeatherReportError.HttpError -> {
+            SimpleToast(text = stringResource(R.string.generic_error, event.message))
+        }
+
+        WeatherReportError.LocationUnavailable -> SimpleToast(
+            R.string.failed_get_location,
+            length = Toast.LENGTH_LONG
+        )
+
+        WeatherReportError.NoInternet -> SimpleToast(R.string.check_internet_connection)
+        null -> {}
     }
 }
 
@@ -244,7 +273,7 @@ fun ExtraWeatherUpdate(state: WeatherReportState) {
 @Composable
 fun WeatherInfoTile(drawable: Int, label: String, value: String, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.padding().padding(start = Spacing.large),
+        modifier = modifier.padding(start = Spacing.large),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -297,5 +326,56 @@ fun DailyForecastCard(index: Int, weatherUpdates: List<WeatherUpdate>) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ScreenError(error: WeatherReportError) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(start = Spacing.large),
+        horizontalAlignment = Alignment.Start
+    ) {
+
+        val (title, description) = when (error) {
+            is WeatherReportError.HttpError -> {
+                Pair(
+                    stringResource(R.string.generic_error_title),
+                    stringResource(R.string.generic_error, error.message)
+                )
+            }
+
+            WeatherReportError.LocationUnavailable -> {
+                Pair(
+                    stringResource(R.string.location_error_title),
+                    stringResource(R.string.failed_get_location)
+                )
+            }
+
+            WeatherReportError.NoInternet -> {
+                Pair(
+                    stringResource(R.string.internet_error_title),
+                    stringResource(R.string.check_internet_connection)
+                )
+            }
+        }
+
+        Icon(
+            painter = painterResource(R.drawable.ic_error),
+            contentDescription = error.toString(),
+            tint = BlueGreyDarken1
+        )
+        Spacer(modifier = Modifier.height(Spacing.small))
+        Text(
+            text = title,
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.titleLarge
+        )
+        Spacer(modifier = Modifier.height(Spacing.normal))
+        Text(
+            text = description,
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.fillMaxWidth(0.8f)
+        )
     }
 }

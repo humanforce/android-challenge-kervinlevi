@@ -2,6 +2,8 @@ package com.humanforce.humanforceandroidengineeringchallenge.presentation.weathe
 
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherForecast
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.OneTimeEvent
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.location.LocationEvent
 
 /**
  * Created by kervinlevi on 24/12/24
@@ -12,7 +14,8 @@ data class WeatherReportState(
     val showLocationPermissionRationale: Boolean = false,
     val location: Location? = null,
     val weatherForecast: WeatherForecast? = null,
-    val error: WeatherReportError? = null
+    val oneTimeEvent: OneTimeEvent<out WeatherReportError>? = null,
+    val onScreenError: WeatherReportError? = null
 )
 
 sealed interface WeatherReportError {

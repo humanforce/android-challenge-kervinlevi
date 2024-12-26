@@ -33,7 +33,7 @@ fun RootNavigationGraph(rootNavController: NavHostController) {
             }
 
             WeatherReportScreen(
-                state = viewModel.weatherReportState.value,
+                state = viewModel.state.value,
                 onAction = viewModel::onAction
             ) { route ->
                 rootNavController.navigate(route)

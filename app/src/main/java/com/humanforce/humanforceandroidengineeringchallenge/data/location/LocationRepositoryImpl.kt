@@ -12,8 +12,10 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.humanforce.humanforceandroidengineeringchallenge.data.db.FavoriteLocationDao
+import com.humanforce.humanforceandroidengineeringchallenge.data.preference.WeatherAppPreference
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.WeatherApi
 import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
+import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationUnavailableException
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import kotlinx.coroutines.flow.Flow
@@ -31,26 +33,26 @@ class LocationRepositoryImpl @Inject constructor(
     private val context: Context,
     private val weatherApi: WeatherApi,
     private val favoriteLocationDao: FavoriteLocationDao,
+    private val preference: WeatherAppPreference,
     private val appId: String
 ) : LocationRepository {
 
-    private val _selectedLocation = MutableStateFlow(Location(userLocation = true))
+    private val _selectedLocation =
+        MutableStateFlow(preference.getRecentLocation() ?: Location(userLocation = true))
     override val selectedLocation: StateFlow<Location> = _selectedLocation
 
     override val favoriteLocations: Flow<List<Location>> =
         favoriteLocationDao.getFavoriteLocations().map { it.toDomainModels() }
 
-    override suspend fun getUserLocation(): Location? {
+    override suspend fun getUserLocation(): Response<Location> {
         if (!isLocationPermissionGranted() || !isLocationEnabled()) {
-            return null
+            return Response.Error(LocationUnavailableException("Check permission and settings."))
         }
         getUserCoordinates()?.let {
             val response = getLocationByCoordinates(it.first, it.second)
-            if (response is Response.Success) {
-                return response.data
-            }
+            return response
         }
-        return null
+        return Response.Error(LocationUnavailableException("Check permission and settings."))
     }
 
     @SuppressLint("MissingPermission")
@@ -119,7 +121,8 @@ class LocationRepositoryImpl @Inject constructor(
             val remoteData = weatherApi.getLocationByCoordinates(longitude, latitude, 1, appId)
             return remoteData.firstOrNull()?.let {
                 Response.Success(
-                    it.toDomainModel().copy(latitude = latitude, longitude = longitude)
+                    it.toDomainModel()
+                        .copy(latitude = latitude, longitude = longitude, userLocation = true)
                 )
             } ?: Response.Error(Exception("Empty result"))
         } catch (exception: Exception) {
@@ -134,6 +137,14 @@ class LocationRepositoryImpl @Inject constructor(
         } else {
             Response.Error(Exception("Failed to insert data."))
         }
+    }
+
+    override fun getRecentLocation(): Location? {
+        return preference.getRecentLocation()
+    }
+
+    override fun saveRecentLocation(location: Location?) {
+        return preference.saveRecentLocation(location)
     }
 
     private fun isLocationEnabled(): Boolean {

@@ -11,4 +11,6 @@ interface WeatherRepository {
 
     suspend fun getWeatherForecast(location: Location): Response<WeatherForecast>
 
+    fun getRecentWeatherForecast(): WeatherForecast?
+    fun saveRecentWeatherForecast(weatherForecast: WeatherForecast?)
 }

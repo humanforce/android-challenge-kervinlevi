@@ -16,8 +16,13 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
  * Created by kervinlevi on 26/12/24
  */
 @Composable
-fun SimpleToast(stringRes: Int) {
-    Toast.makeText(LocalContext.current, stringResource(stringRes), Toast.LENGTH_SHORT).show()
+fun SimpleToast(stringRes: Int, length: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(LocalContext.current, stringResource(stringRes), length).show()
+}
+
+@Composable
+fun SimpleToast(text: String, length: Int = Toast.LENGTH_SHORT) {
+    Toast.makeText(LocalContext.current, text, length).show()
 }
 
 @OptIn(ExperimentalPermissionsApi::class)

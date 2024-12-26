@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import com.humanforce.humanforceandroidengineeringchallenge.domain.weather.WeatherRepository
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.OneTimeEvent
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.weatherreport.WeatherReportError.LocationUnavailable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -21,64 +22,73 @@ class WeatherReportViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository
 ) : ViewModel() {
 
-    var weatherReportState = mutableStateOf(WeatherReportState())
+    var state = mutableStateOf(
+        WeatherReportState(
+            location = locationRepository.getRecentLocation(),
+            weatherForecast = weatherRepository.getRecentWeatherForecast()
+        )
+    )
         private set
 
     val selectedLocation = locationRepository.selectedLocation
 
     init {
-        val locationPermissionGranted = locationRepository.isLocationPermissionGranted()
-        weatherReportState.value = weatherReportState.value.copy(
-            requestLocationPermissions = !locationPermissionGranted,
-            error = if (!locationPermissionGranted) LocationUnavailable else null
+        val requestUserLocation =
+            !locationRepository.isLocationPermissionGranted() && selectedLocation.value.userLocation
+        state.value = state.value.copy(
+            requestLocationPermissions = requestUserLocation
         )
-        if (locationRepository.isLocationPermissionGranted()) {
+        if (!requestUserLocation) {
             requestLocationAndWeather()
         }
     }
 
     private fun requestLocationAndWeather() = viewModelScope.launch {
-        if (weatherReportState.value.isLoading) return@launch
-        weatherReportState.value = weatherReportState.value.copy(isLoading = true)
+        if (state.value.isLoading || state.value.requestLocationPermissions) return@launch
+        state.value = state.value.copy(isLoading = true, oneTimeEvent = null, onScreenError = null)
 
         val location = if (selectedLocation.value.userLocation) {
-            locationRepository.getUserLocation()
+            (locationRepository.getUserLocation() as? Response.Success)?.data
         } else {
             selectedLocation.value
         }
 
         if (location == null) {
-            weatherReportState.value = weatherReportState.value.copy(
+            val hasCache = state.value.weatherForecast != null
+            state.value = state.value.copy(
                 isLoading = false,
-                location = null,
-                weatherForecast = null,
-                error = LocationUnavailable
+                oneTimeEvent = if (hasCache) OneTimeEvent(LocationUnavailable) else null,
+                onScreenError = if (hasCache) null else LocationUnavailable
             )
             return@launch
         }
 
         when (val apiResponse = weatherRepository.getWeatherForecast(location)) {
             is Response.Success -> {
-                weatherReportState.value = weatherReportState.value.copy(
+                state.value = state.value.copy(
                     isLoading = false,
                     location = location,
                     weatherForecast = apiResponse.data,
-                    error = null
+                    oneTimeEvent = null,
+                    onScreenError = null
                 )
+                locationRepository.saveRecentLocation(location)
+                weatherRepository.saveRecentWeatherForecast(apiResponse.data)
             }
 
             is Response.Error -> {
                 val exception = apiResponse.exception
+                val hasCache = state.value.weatherForecast != null
                 val error = if (exception is HttpException) {
                     WeatherReportError.HttpError("${exception.code()}: ${exception.message()}")
                 } else {
                     WeatherReportError.NoInternet
                 }
-                weatherReportState.value = weatherReportState.value.copy(
+                state.value = state.value.copy(
                     isLoading = false,
                     location = location,
-                    weatherForecast = null,
-                    error = error
+                    oneTimeEvent = if (hasCache) OneTimeEvent(error) else null,
+                    onScreenError = if (hasCache) null else error
                 )
             }
         }
@@ -87,17 +97,19 @@ class WeatherReportViewModel @Inject constructor(
     fun onAction(action: WeatherReportAction) {
         when (action) {
             WeatherReportAction.PermissionGranted -> {
-                weatherReportState.value = weatherReportState.value.copy(
-                    requestLocationPermissions = false,
-                    showLocationPermissionRationale = false
+                state.value = state.value.copy(
+                    requestLocationPermissions = false, showLocationPermissionRationale = false
                 )
                 requestLocationAndWeather()
             }
 
             WeatherReportAction.ShowPermissionsRationale -> {
-                weatherReportState.value = weatherReportState.value.copy(
+                val hasCache = state.value.weatherForecast != null
+                state.value = state.value.copy(
                     requestLocationPermissions = false,
-                    showLocationPermissionRationale = true
+                    showLocationPermissionRationale = true,
+                    oneTimeEvent = if (hasCache) OneTimeEvent(LocationUnavailable) else null,
+                    onScreenError = if (hasCache) null else LocationUnavailable
                 )
             }
 

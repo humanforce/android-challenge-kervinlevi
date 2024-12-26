@@ -1,5 +1,6 @@
 package com.humanforce.humanforceandroidengineeringchallenge.data.weather
 
+import com.humanforce.humanforceandroidengineeringchallenge.data.preference.WeatherAppPreference
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response.Error
@@ -12,6 +13,7 @@ import com.humanforce.humanforceandroidengineeringchallenge.domain.weather.Weath
  */
 class WeatherRepositoryImpl(
     private val weatherApi: WeatherApi,
+    private val preference: WeatherAppPreference,
     private val appId: String
 ): WeatherRepository {
 
@@ -27,5 +29,13 @@ class WeatherRepositoryImpl(
         } catch (exception: Exception) {
             return Error(exception)
         }
+    }
+
+    override fun getRecentWeatherForecast(): WeatherForecast? {
+        return preference.getRecentWeatherForecast()
+    }
+
+    override fun saveRecentWeatherForecast(weatherForecast: WeatherForecast?) {
+        return preference.saveRecentWeatherForecast(weatherForecast)
     }
 }
