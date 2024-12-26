@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.WeatherAppTheme
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigation.RootNavigationGraph
 import dagger.hilt.android.AndroidEntryPoint
 

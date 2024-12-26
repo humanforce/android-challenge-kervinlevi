@@ -1,4 +1,4 @@
-package com.humanforce.humanforceandroidengineeringchallenge.presentation.main
+package com.humanforce.humanforceandroidengineeringchallenge.presentation.common
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp

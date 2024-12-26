@@ -1,4 +1,4 @@
-package com.humanforce.humanforceandroidengineeringchallenge.presentation.main
+package com.humanforce.humanforceandroidengineeringchallenge.presentation.common
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

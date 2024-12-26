@@ -1,4 +1,4 @@
-package com.humanforce.humanforceandroidengineeringchallenge.presentation.main
+package com.humanforce.humanforceandroidengineeringchallenge.presentation.common
 
 import androidx.compose.ui.graphics.Color
 import com.humanforce.humanforceandroidengineeringchallenge.R

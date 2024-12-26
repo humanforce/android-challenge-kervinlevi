@@ -1,4 +1,4 @@
-package com.humanforce.humanforceandroidengineeringchallenge.presentation.main
+package com.humanforce.humanforceandroidengineeringchallenge.presentation.common
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

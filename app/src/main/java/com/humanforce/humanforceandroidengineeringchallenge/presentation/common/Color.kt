@@ -1,4 +1,4 @@
-package com.humanforce.humanforceandroidengineeringchallenge.presentation.main
+package com.humanforce.humanforceandroidengineeringchallenge.presentation.common
 
 import androidx.compose.ui.graphics.Color
 
@@ -21,7 +21,6 @@ val BlueLighten3 = Color(0xFF90CAF9)
 val BlueLighten5 = Color(0xFFE3F2FD)
 val BlueGreyLighten1 = Color(0xFF78909C)
 val BlueGreyLighten4 = Color(0xFFCFD8DC)
-val BlueGreyLighten5 = Color(0xFFECEFF1)
 val BlueGreyDarken1 = Color(0xFF546E7A)
 val IndigoLighten2 = Color(0xFF7986CB)
 
