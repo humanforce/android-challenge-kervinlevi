@@ -159,7 +159,7 @@ fun WeatherReportScreen(
 
 @Composable
 fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit) {
-    val current = state.weatherForecast?.updates?.firstOrNull()?.firstOrNull()
+    val current = state.weatherForecast?.current
     Box(
         modifier = Modifier.fillMaxWidth().background(
             Brush.verticalGradient(
@@ -239,7 +239,7 @@ fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ExtraWeatherUpdate(state: WeatherReportState) {
-    val current = state.weatherForecast?.updates?.firstOrNull()?.firstOrNull()
+    val current = state.weatherForecast?.current
     FlowRow(
         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.large),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -316,11 +316,7 @@ fun DailyForecastCard(
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.normal)) {
         Box(modifier = Modifier.fillMaxWidth().background(color = OrangeDarken1)) {
             Text(
-                text = if (index == 0) {
-                    stringResource(R.string.today)
-                } else {
-                    weatherUpdates.firstOrNull()?.date ?: ""
-                },
+                text = weatherUpdates.firstOrNull()?.date ?: "",
                 modifier = Modifier.padding(all = Spacing.normal),
                 style = MaterialTheme.typography.bodyMedium.copy(letterSpacing = 2.sp),
                 color = Color.White

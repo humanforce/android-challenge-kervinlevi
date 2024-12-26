@@ -29,5 +29,6 @@ val forecast1 = WeatherForecast(
     sunrise = "6:00 am",
     sunset = "5:30 pm",
     retrievedOn = "Dec 27, 2024 9:30 pm",
-    gmtTimezone = 8
+    gmtTimezone = 8,
+    current = updates1.first().first()
 )

@@ -4,11 +4,14 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 /**
- * Created by kervinlevi on 24/12/24
+ * Created by kervinlevi on 27/12/24
  */
-@JsonClass(generateAdapter = true)
-data class WeatherResponseJson(
-    @Json(name = "list") val forecasts: List<ForecastJson?>?,
 
-    @Json(name = "city") val city: CityJson?,
+@JsonClass(generateAdapter = true)
+data class SunriseSunsetJson(
+    @Json(name = "sunrise")
+    val sunrise: Long?,
+
+    @Json(name = "sunset")
+    val sunset: Long?,
 )

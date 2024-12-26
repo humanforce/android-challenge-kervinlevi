@@ -1,7 +1,8 @@
 package com.humanforce.humanforceandroidengineeringchallenge.data.weather
 
+import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.CurrentWeatherJson
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.WeatherDescriptionJson
-import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.WeatherResponseJson
+import com.humanforce.humanforceandroidengineeringchallenge.data.weather.json.WeatherForecastJson
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherCondition
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherForecast
@@ -15,17 +16,20 @@ import kotlin.math.roundToInt
 /**
  * Created by kervinlevi on 24/12/24
  */
-fun WeatherResponseJson.toDomainModel(): WeatherForecast {
-    val location = Location(
-        latitude = city?.coordinates?.lat,
-        longitude = city?.coordinates?.long,
-        city = city?.name,
-        country = (city?.country)?.let { Locale("", it).displayCountry } ?: city?.country,
-        userLocation = false
-    )
+
+fun mapToDomainModel(
+    currentWeather: CurrentWeatherJson?, forecast: WeatherForecastJson?
+): WeatherForecast {
+
+    val location = Location(latitude = forecast?.city?.coordinates?.lat,
+        longitude = forecast?.city?.coordinates?.long,
+        city = forecast?.city?.name,
+        country = (forecast?.city?.country)?.let { Locale("", it).displayCountry }
+            ?: forecast?.city?.country,
+        userLocation = false)
 
     val locale = Locale.getDefault()
-    val gmtInt = ((city?.timezone ?: 0L) / 3600L).toInt()
+    val gmtInt = ((forecast?.city?.timezone ?: 0L) / 3600L).toInt()
     val current = Date()
 
     val dateTimeFormat = SimpleDateFormat("MMM d, yyyy h:mm a", locale)
@@ -40,7 +44,7 @@ fun WeatherResponseJson.toDomainModel(): WeatherForecast {
         timeFormat.timeZone = it
     }
 
-    val updates = forecasts?.filterNotNull()?.map {
+    val updates = forecast?.forecasts?.filterNotNull()?.map {
         var date = it.dateTime?.split(" ")?.firstOrNull()
         var time = it.dateTime?.split(" ")?.lastOrNull()
         it.dateTime?.let { it1 -> inputFormat.parse(it1) }?.let { parsedDate ->
@@ -58,15 +62,26 @@ fun WeatherResponseJson.toDomainModel(): WeatherForecast {
             humidity = it.mainForecast?.humidity,
             chanceOfRain = ((it.precipitation ?: 0f) * 100).roundToInt()
         )
-    }?.groupBy { it.date }?.values?.toList()?.take(5) ?: emptyList()
+    }?.groupBy { it.date }?.values?.toList() ?: emptyList()
 
     return WeatherForecast(
         location = location,
         updates = updates,
-        sunrise = city?.sunrise?.let { timeFormat.format(it * 1000L) },
-        sunset = city?.sunset?.let { timeFormat.format(it * 1000L) },
+        sunrise = currentWeather?.sunriseSunset?.sunrise?.let { timeFormat.format(it * 1000L) },
+        sunset = currentWeather?.sunriseSunset?.sunset?.let { timeFormat.format(it * 1000L) },
         gmtTimezone = gmtInt,
-        retrievedOn = dateTimeFormat.format(current)
+        retrievedOn = dateTimeFormat.format(current),
+        current = WeatherUpdate(
+            date = null,
+            time = null,
+            chanceOfRain = ((forecast?.forecasts?.firstOrNull()?.precipitation
+                ?: 0f) * 100).roundToInt(),
+            condition = currentWeather?.weather?.firstOrNull()?.toWeatherCondition(),
+            conditionDescription = currentWeather?.weather?.firstOrNull()?.description,
+            humidity = currentWeather?.mainForecast?.humidity,
+            temperature = currentWeather?.mainForecast?.temperature,
+            feelsLikeTemp = currentWeather?.mainForecast?.temperatureFeelsLike
+        )
     )
 }
 
