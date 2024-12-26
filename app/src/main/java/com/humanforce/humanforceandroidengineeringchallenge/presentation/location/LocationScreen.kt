@@ -1,5 +1,6 @@
 package com.humanforce.humanforceandroidengineeringchallenge.presentation.location
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,14 +11,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -41,12 +45,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import com.humanforce.humanforceandroidengineeringchallenge.R
+import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getDisplayText
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.location.LocationAction.SaveLocation
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.location.LocationAction.SearchLocation
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.location.LocationAction.UpdateLocation
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.location.LocationAction.UpdateQuery
@@ -64,14 +71,15 @@ import com.humanforce.humanforceandroidengineeringchallenge.presentation.navigat
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LocationScreen(
-    state: LocationState, onAction: (LocationAction) -> Unit, navigateTo: (String) -> Unit
+    state: LocationState,
+    favoriteLocations: List<Location>,
+    onAction: (LocationAction) -> Unit,
+    navigateTo: (String) -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { LocationTopBar(navigateTo, scrollBehavior) }
-    ) { innerPadding ->
+    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = { LocationTopBar(navigateTo, scrollBehavior) }) { innerPadding ->
         Box(modifier = Modifier.background(BlueDarken3).imePadding()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(
@@ -129,6 +137,12 @@ fun LocationScreen(
                     when (state.searchError) {
                         is LocationError.EmptyQuery -> stringResource(R.string.error_empty_query)
                         is LocationError.EmptyResult -> stringResource(R.string.error_empty_result)
+                        is LocationError.NoInternet -> stringResource(R.string.check_internet_connection)
+                        is LocationError.HttpError -> stringResource(
+                            R.string.generic_error,
+                            state.searchError.message
+                        )
+
                         else -> null
                     }?.let { errorText ->
                         Box(modifier = Modifier.background(color = Color.White)) {
@@ -150,17 +164,30 @@ fun LocationScreen(
                                 onAction(UpdateLocation(it))
                                 navigateTo(NavGraph.WEATHER_REPORT)
                             }) {
-                            Text(
-                                text = "${it.city}, ${it.country}",
-                                style = MaterialTheme.typography.titleSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.fillMaxWidth()
-                                    .padding(horizontal = Spacing.medium, vertical = Spacing.large)
-                            )
-                            HorizontalDivider(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                color = BlueGreyLighten4
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = it.getDisplayText(),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f).padding(
+                                        horizontal = Spacing.medium, vertical = Spacing.large
+                                    )
+                                )
+                                IconButton(onClick = { onAction(SaveLocation(it)) }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.FavoriteBorder,
+                                        contentDescription = stringResource(R.string.add_favorite),
+                                        tint = BlueGreyLighten1,
+                                        modifier = Modifier.size(Spacing.medium)
+                                    )
+                                }
+                            }
+                            HorizontalDivider(
+                                modifier = Modifier.fillMaxWidth(), color = BlueGreyLighten4
                             )
                         }
                     }
@@ -202,6 +229,87 @@ fun LocationScreen(
                         }
                     }
                 }
+
+                if (favoriteLocations.isNotEmpty()) {
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors().copy(containerColor = Color.White),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(
+                                topStart = Spacing.normal, topEnd = Spacing.normal
+                            )
+                        ) {
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Spacer(modifier = Modifier.width(Spacing.normal))
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = stringResource(R.string.select_favorite),
+                                    tint = BlueGreyLighten1
+                                )
+                                Spacer(modifier = Modifier.width(Spacing.small))
+                                Text(
+                                    text = stringResource(R.string.select_favorite),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.fillMaxWidth()
+                                        .padding(vertical = Spacing.large).weight(1f)
+                                )
+                            }
+                        }
+                    }
+
+                    items(favoriteLocations) {
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(), color = BlueGreyLighten4
+                        )
+                        Box(modifier = Modifier.fillMaxWidth().background(Color.White)
+                            .clickable(true) {
+                                onAction(UpdateLocation(it))
+                                navigateTo(NavGraph.WEATHER_REPORT)
+                            }) {
+                            Text(
+                                text = it.getDisplayText(),
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth().padding(
+                                    horizontal = Spacing.medium, vertical = Spacing.large
+                                )
+                            )
+                        }
+                    }
+
+                    item {
+                        Card(colors = CardDefaults.cardColors().copy(containerColor = Color.White),
+                            modifier = Modifier.fillMaxWidth().height(Spacing.normal),
+                            shape = RoundedCornerShape(
+                                bottomStart = Spacing.normal, bottomEnd = Spacing.normal
+                            ),
+                            content = {})
+                    }
+                }
+            }
+        }
+
+        state.oneTimeEvent?.consumeOneTimeEvent()?.let {
+            when (it) {
+                LocationEvent.SaveFavoriteSuccessful -> {
+                    Toast.makeText(
+                        LocalContext.current,
+                        stringResource(R.string.added_favorites),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                LocationEvent.SaveFavoriteFailed -> {
+                    Toast.makeText(
+                        LocalContext.current,
+                        stringResource(R.string.failed_add_favorites),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -226,8 +334,7 @@ fun LocationTopBar(navigateTo: (String) -> Unit, scrollBehavior: TopAppBarScroll
             navigationIconContentColor = Color.White,
             containerColor = BlueDarken3,
             scrolledContainerColor = BlueDarken3
-        ),
-        navigationIcon = {
+        ), navigationIcon = {
             IconButton(
                 onClick = { navigateTo(NavGraph.WEATHER_REPORT) },
                 modifier = Modifier.padding(start = Spacing.small)
@@ -237,7 +344,6 @@ fun LocationTopBar(navigateTo: (String) -> Unit, scrollBehavior: TopAppBarScroll
                     contentDescription = stringResource(R.string.back)
                 )
             }
-        },
-        scrollBehavior = scrollBehavior
+        }, scrollBehavior = scrollBehavior
     )
 }

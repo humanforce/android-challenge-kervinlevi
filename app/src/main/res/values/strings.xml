@@ -15,4 +15,10 @@
     <string name="error_empty_query">Please input a query.</string>
     <string name="error_empty_result">Empty search result.</string>
     <string name="back">Back</string>
+    <string name="add_favorite">Add to favorites</string>
+    <string name="select_favorite">Pick a favorite location</string>
+    <string name="added_favorites">Added to favorite locations.</string>
+    <string name="failed_add_favorites">Failed to add to favorites.</string>
+    <string name="check_internet_connection">Please check your internet connection.</string>
+    <string name="generic_error">An unexpected error is encountered: %s</string>
 </resources>

@@ -6,9 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.OneTimeEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
@@ -21,19 +25,17 @@ class LocationViewModel @Inject constructor(private val locationRepository: Loca
     var locationState = mutableStateOf(LocationState())
         private set
 
+    val favorites = locationRepository.favoriteLocations.stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        emptyList()
+    )
+
     private var currentSearchJob: WeakReference<Job>? = null
     fun onAction(action: LocationAction) {
         when (action) {
-            LocationAction.PermissionGranted -> {
-
-            }
-
             is LocationAction.SearchLocation -> {
                 searchLocations(locationState.value.query)
-            }
-
-            LocationAction.ShowPermissionsRationale -> {
-
             }
 
             is LocationAction.UpdateQuery -> {
@@ -47,7 +49,21 @@ class LocationViewModel @Inject constructor(private val locationRepository: Loca
             LocationAction.UseUserLocation -> {
                 locationRepository.updateLocation(location = Location(userLocation = true))
             }
+
+            is LocationAction.SaveLocation -> {
+                addFavoriteLocation(action.location)
+            }
         }
+    }
+
+    private fun addFavoriteLocation(location: Location) = viewModelScope.launch {
+        val result = locationRepository.addFavoriteLocation(location)
+        val event = if (result is Response.Success) {
+            OneTimeEvent(LocationEvent.SaveFavoriteSuccessful)
+        } else {
+            OneTimeEvent(LocationEvent.SaveFavoriteFailed)
+        }
+        locationState.value = locationState.value.copy(oneTimeEvent = event)
     }
 
     private fun searchLocations(query: String) {
@@ -69,15 +85,28 @@ class LocationViewModel @Inject constructor(private val locationRepository: Loca
             locationState.value = locationState.value.copy(isSearchLoading = true)
             val result = locationRepository.searchLocations(locationState.value.query)
 
-            if (result is Response.Success) {
-                val error = if (result.data.isEmpty()) LocationError.EmptyResult else null
-                locationState.value = locationState.value.copy(
-                    isSearchLoading = false,
-                    searchResults = result.data,
-                    searchError = error
-                )
-            } else {
-                // show error
+            when (result) {
+                is Response.Success -> {
+                    val error = if (result.data.isEmpty()) LocationError.EmptyResult else null
+                    locationState.value = locationState.value.copy(
+                        isSearchLoading = false,
+                        searchResults = result.data,
+                        searchError = error
+                    )
+                }
+                is Response.Error -> {
+                    val exception = result.exception
+                    val error = if (exception is HttpException) {
+                        LocationError.HttpError("${exception.code()}: ${exception.message()}")
+                    } else {
+                        LocationError.NoInternet
+                    }
+                    locationState.value = locationState.value.copy(
+                        isSearchLoading = false,
+                        searchResults = emptyList(),
+                        searchError = error
+                    )
+                }
             }
             currentSearchJob = null
         }.also {

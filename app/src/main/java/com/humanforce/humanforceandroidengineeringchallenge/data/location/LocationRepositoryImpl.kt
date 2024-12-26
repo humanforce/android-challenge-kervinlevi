@@ -11,13 +11,15 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.humanforce.humanforceandroidengineeringchallenge.data.db.FavoriteLocationDao
 import com.humanforce.humanforceandroidengineeringchallenge.data.weather.WeatherApi
-import com.humanforce.humanforceandroidengineeringchallenge.data.weather.toDomainModel
 import com.humanforce.humanforceandroidengineeringchallenge.domain.location.LocationRepository
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -28,11 +30,15 @@ import kotlin.coroutines.suspendCoroutine
 class LocationRepositoryImpl @Inject constructor(
     private val context: Context,
     private val weatherApi: WeatherApi,
+    private val favoriteLocationDao: FavoriteLocationDao,
     private val appId: String
 ) : LocationRepository {
 
     private val _selectedLocation = MutableStateFlow(Location(userLocation = true))
     override val selectedLocation: StateFlow<Location> = _selectedLocation
+
+    override val favoriteLocations: Flow<List<Location>> =
+        favoriteLocationDao.getFavoriteLocations().map { it.toDomainModels() }
 
     override suspend fun getUserLocation(): Location? {
         if (!isLocationPermissionGranted() || !isLocationEnabled()) {
@@ -112,10 +118,21 @@ class LocationRepositoryImpl @Inject constructor(
         try {
             val remoteData = weatherApi.getLocationByCoordinates(longitude, latitude, 1, appId)
             return remoteData.firstOrNull()?.let {
-                Response.Success(it.toDomainModel())
+                Response.Success(
+                    it.toDomainModel().copy(latitude = latitude, longitude = longitude)
+                )
             } ?: Response.Error(Exception("Empty result"))
         } catch (exception: Exception) {
             return Response.Error(exception)
+        }
+    }
+
+    override suspend fun addFavoriteLocation(location: Location): Response<Long> {
+        val rowId = favoriteLocationDao.insert(location.toDbEntity())
+        return if (rowId > 0) {
+            Response.Success(rowId)
+        } else {
+            Response.Error(Exception("Failed to insert data."))
         }
     }
 

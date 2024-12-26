@@ -2,6 +2,7 @@ package com.humanforce.humanforceandroidengineeringchallenge.domain.location
 
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Response
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -19,4 +20,7 @@ interface LocationRepository {
     suspend fun searchLocations(query: String): Response<List<Location>>
 
     suspend fun getLocationByCoordinates(longitude: Double, latitude: Double): Response<Location>
+
+    val favoriteLocations: Flow<List<Location>>
+    suspend fun addFavoriteLocation(location: Location): Response<Long>
 }

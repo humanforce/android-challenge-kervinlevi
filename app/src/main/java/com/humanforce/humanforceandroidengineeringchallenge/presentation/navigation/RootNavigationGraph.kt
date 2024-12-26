@@ -42,8 +42,11 @@ fun RootNavigationGraph(rootNavController: NavHostController) {
 
         composable(NavGraph.LOCATION) {
             val viewModel: LocationViewModel = hiltViewModel()
+            val favorites by viewModel.favorites.collectAsStateWithLifecycle()
+
             LocationScreen(
                 state = viewModel.locationState.value,
+                favoriteLocations = favorites,
                 onAction = viewModel::onAction
             ) { route ->
                 if (route == NavGraph.WEATHER_REPORT) {

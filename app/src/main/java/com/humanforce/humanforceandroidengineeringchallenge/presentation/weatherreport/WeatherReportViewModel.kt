@@ -51,7 +51,10 @@ class WeatherReportViewModel @Inject constructor(
                 is Response.Success -> {
                     weatherReportState.value = weatherReportState.value.copy(
                         isLoading = false,
-                        location = apiResponse.data.location,
+                        location = apiResponse.data.location?.copy(
+                            state = location.state,
+                            userLocation = location.userLocation
+                        ),
                         weatherForecast = apiResponse.data,
                         error = null
                     )

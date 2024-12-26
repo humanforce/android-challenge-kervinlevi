@@ -55,6 +55,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.humanforce.humanforceandroidengineeringchallenge.R
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.Location
 import com.humanforce.humanforceandroidengineeringchallenge.domain.model.WeatherUpdate
+import com.humanforce.humanforceandroidengineeringchallenge.presentation.common.getDisplayText
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueDarken3
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyDarken1
 import com.humanforce.humanforceandroidengineeringchallenge.presentation.main.BlueGreyLighten1
@@ -143,15 +144,10 @@ fun CurrentWeatherUpdate(state: WeatherReportState, navigateTo: (String) -> Unit
             )
             Spacer(modifier = Modifier.height(Spacing.xlarge.times(4)))
 
-            val location = if (state.location?.city != null && state.location.country != null) {
-                "${state.location.city}, ${state.location.country}"
-            } else {
-                ""
-            }
             Box {
                 Column {
                     Text(
-                        text = location,
+                        text = state.location.getDisplayText(max = 2),
                         maxLines = 1,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(horizontal = Spacing.large).fillMaxWidth()
